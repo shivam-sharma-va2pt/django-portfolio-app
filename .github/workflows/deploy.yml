@@ -1,0 +1,34 @@
+name: Deploy Django App to AWS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to EC2 via Bastion
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PRIVATE_KEY }}" > ~/.ssh/github_actions_key
+          chmod 600 ~/.ssh/github_actions_key
+          ssh-keyscan -H ${{ secrets.BASTION_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy via Bastion Host
+        run: |
+          ssh -i ~/.ssh/github_actions_key ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }} << 'EOF'
+            echo "🔁 SSH to Web Server (Private EC2)"
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/bastion.pem ${{ secrets.TARGET_USER }}@${{ secrets.TARGET_HOST }} << 'INNER_EOF'
+              echo "🚀 Running deploy.sh on Web Server..."
+              cd ~/django-portfolio-app
+              bash deploy.sh
+            INNER_EOF
+          EOF
+
