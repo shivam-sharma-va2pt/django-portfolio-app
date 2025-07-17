@@ -21,14 +21,7 @@ jobs:
           chmod 600 ~/.ssh/github_actions_key
           ssh-keyscan -H ${{ secrets.BASTION_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Deploy via Bastion Host
+      - name: Deploy to Web Server via Bastion Host
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/github_actions_key ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }} << 'EOF'
-            echo "🔁 SSH to Web Server (Private EC2)"
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/bastion.pem ${{ secrets.TARGET_USER }}@${{ secrets.TARGET_HOST }} << 'INNER_EOF'
-              echo "🚀 Running deploy.sh on Web Server..."
-              cd ~/django-portfolio-app
-              bash deploy.sh
-            INNER_EOF
-          EOF
-
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/github_actions_key ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }} \
+          "ssh -o StrictHostKeyChecking=no -i ~/.ssh/bastion.pem ${{ secrets.TARGET_USER }}@${{ secrets.TARGET_HOST }} 'cd ~/django-portfolio-app && bash deploy.sh'"
